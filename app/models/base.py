@@ -1,6 +1,6 @@
 """Pydantic models for the Vector Database REST API."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -30,8 +30,8 @@ class Chunk(BaseModel):
     text: str = Field(..., description="The text content of the chunk")
     embedding: list[float] = Field(..., description="Vector embedding of the chunk")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
@@ -47,8 +47,8 @@ class Document(BaseModel):
     name: str = Field(..., description="Name of the document")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Document metadata")
     chunks: list[Chunk] = Field(default_factory=list, description="List of chunks in the document")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
@@ -67,8 +67,8 @@ class Library(BaseModel):
     documents: list[Document] = Field(default_factory=list, description="List of documents in the library")
     index_type: IndexType | None = Field(None, description="Type of index built for the library")
     index_built_at: datetime | None = Field(None, description="When the index was last built")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("created_at", "updated_at", "index_built_at", mode="before")
     @classmethod
@@ -193,7 +193,7 @@ class SystemStats(BaseModel):
 class ErrorResponse(BaseModel):
     detail: str = Field(..., description="Error message")
     error_code: str | None = Field(None, description="Error code")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     request_id: str | None = Field(None, description="Request identifier for tracking")
 
 
@@ -205,5 +205,5 @@ class ValidationError(BaseModel):
 
 class ValidationErrorResponse(BaseModel):
     detail: list[ValidationError] = Field(..., description="List of validation errors")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     request_id: str | None = Field(None, description="Request identifier for tracking")

@@ -1,7 +1,7 @@
 """Main FastAPI application for the Vector Database REST API."""
 
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,7 +101,7 @@ async def health_check():
         return {
             "status": "healthy",
             "database": {"status": "connected", "stats": stats},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "configuration": {
                 "host": settings.host,
                 "port": settings.port,

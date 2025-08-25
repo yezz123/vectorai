@@ -2,7 +2,7 @@
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from threading import Lock
 from typing import Any
 
@@ -191,7 +191,7 @@ class DemoService:
                 if demo_id in self.demos:
                     self.demos[demo_id]["status"] = DemoStatus.FAILED
                     self.demos[demo_id]["error"] = str(e)
-                    self.demos[demo_id]["completed_at"] = datetime.utcnow()
+                    self.demos[demo_id]["completed_at"] = datetime.now(UTC)
 
     def run_quick_demo_sync(self, demo_id: str) -> dict[str, Any]:
         """Run a quick demo synchronously."""
@@ -202,7 +202,7 @@ class DemoService:
                 if demo_id in self.demos:
                     self.demos[demo_id]["status"] = DemoStatus.FAILED
                     self.demos[demo_id]["error"] = str(e)
-                    self.demos[demo_id]["completed_at"] = datetime.utcnow()
+                    self.demos[demo_id]["completed_at"] = datetime.now(UTC)
             raise
 
     def _run_demo_sync(self, demo_id: str, quick: bool = False) -> dict[str, Any]:
@@ -213,7 +213,7 @@ class DemoService:
 
             demo = self.demos[demo_id]
             demo["status"] = DemoStatus.RUNNING
-            demo["started_at"] = datetime.utcnow()
+            demo["started_at"] = datetime.now(UTC)
 
         logger.info(f"Starting demo execution: {demo_id} (quick: {quick})")
 
@@ -231,7 +231,7 @@ class DemoService:
                     "category": "demo",
                     "created_by": "demo_service",
                     "embedding_provider": "cohere" if demo["use_cohere"] else "hash",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
             library = library_service.create_library(library_data)
@@ -363,7 +363,7 @@ class DemoService:
             # Mark demo as completed
             with self.demo_lock:
                 demo["status"] = DemoStatus.COMPLETED
-                demo["completed_at"] = datetime.utcnow()
+                demo["completed_at"] = datetime.now(UTC)
                 demo["progress"]["step"] = "Completed"
                 demo["progress"]["completed_steps"].append("Demo completed successfully")
                 demo["results"] = {
@@ -389,7 +389,7 @@ class DemoService:
             with self.demo_lock:
                 demo["status"] = DemoStatus.FAILED
                 demo["error"] = str(e)
-                demo["completed_at"] = datetime.utcnow()
+                demo["completed_at"] = datetime.now(UTC)
                 demo["progress"]["step"] = f"Failed: {str(e)}"
             raise
 

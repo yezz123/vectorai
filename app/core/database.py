@@ -9,6 +9,7 @@ import os
 import threading
 import time
 from collections import defaultdict
+from datetime import datetime
 from typing import Any
 
 from app.core.indexing import BaseIndex, IndexFactory
@@ -408,11 +409,15 @@ class ThreadSafeDatabase:
             # Convert data to serializable format
             serializable_data = {}
             for lib_id, library in self._data.items():
-                serializable_data[lib_id] = library.model_dump()
+                # Use model_dump with explicit datetime handling
+                lib_dict = library.model_dump()
+                # Convert datetime objects to ISO format strings for JSON serialization
+                self._convert_datetime_to_iso(lib_dict)
+                serializable_data[lib_id] = lib_dict
 
             # Save to file
             with open(self._persistence_path, "w") as f:
-                json.dump(serializable_data, f, indent=2, default=str)
+                json.dump(serializable_data, f, indent=2)
 
         except Exception as e:
             # Log error but don't fail the operation
@@ -430,6 +435,9 @@ class ThreadSafeDatabase:
             # Reconstruct objects
             for lib_id, lib_data in data.items():
                 try:
+                    # Convert datetime strings back to datetime objects before reconstruction
+                    self._convert_datetime_strings(lib_data)
+
                     library = Library(**lib_data)
                     self._data[lib_id] = library
 
@@ -448,6 +456,42 @@ class ThreadSafeDatabase:
 
         except Exception as e:
             logger.error(f"Failed to load database from disk: {e}")
+
+    def _convert_datetime_strings(self, data: dict[str, Any]) -> None:
+        """Recursively convert datetime strings and float timestamps back to datetime objects in the data structure."""
+        for key, value in data.items():
+            if isinstance(value, dict):
+                self._convert_datetime_strings(value)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        self._convert_datetime_strings(item)
+            elif isinstance(value, str) and key in ["created_at", "updated_at", "index_built_at", "timestamp"]:
+                try:
+                    # Try to parse ISO format datetime strings
+                    data[key] = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                except ValueError:
+                    # If it's not a valid datetime string, leave as is
+                    pass
+            elif isinstance(value, int | float) and key in ["created_at", "updated_at", "index_built_at", "timestamp"]:
+                try:
+                    # Convert float timestamps to datetime objects
+                    data[key] = datetime.fromtimestamp(value)
+                except (ValueError, OSError):
+                    # If it's not a valid timestamp, leave as is
+                    pass
+
+    def _convert_datetime_to_iso(self, data: dict[str, Any]) -> None:
+        """Recursively convert datetime objects to ISO format strings for JSON serialization."""
+        for key, value in data.items():
+            if isinstance(value, dict):
+                self._convert_datetime_to_iso(value)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        self._convert_datetime_to_iso(item)
+            elif isinstance(value, datetime):
+                data[key] = value.isoformat()
 
     def get_stats(self) -> dict[str, Any]:
         """Get database statistics."""
