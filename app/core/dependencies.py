@@ -73,4 +73,7 @@ def get_search_service() -> SearchService:
 
 def get_demo_service() -> DemoService:
     """Get demo service instance."""
-    return DemoService()
+    settings = get_settings()
+    # Use a separate persistence path for demos
+    demo_persistence_path = os.path.join(os.path.dirname(settings.persistence_path), "demos.json")
+    return DemoService(persistence_path=demo_persistence_path)

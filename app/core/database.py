@@ -3,13 +3,13 @@
 Uses locks and atomic operations to prevent data races between reads and writes.
 """
 
+import contextlib
 import json
 import logging
 import os
 import threading
-import time
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.indexing import BaseIndex, IndexFactory
@@ -124,7 +124,7 @@ class ThreadSafeDatabase:
                 if hasattr(library, field) and field not in ["id", "created_at"]:
                     setattr(library, field, value)
 
-            library.updated_at = time.time()
+            library.updated_at = datetime.now(UTC)
             self._data[library_id] = library
 
             # Persist to disk if enabled
@@ -169,7 +169,7 @@ class ThreadSafeDatabase:
 
             library = self._data[library_id]
             library.documents.append(document)
-            library.updated_at = time.time()
+            library.updated_at = datetime.now(UTC)
 
             # Update index with new chunks
             if library_id in self._indexes:
@@ -199,12 +199,7 @@ class ThreadSafeDatabase:
                 return None
 
             library = self._data[library_id]
-            for doc in library.documents:
-                if doc.id == document_id:
-                    return doc
-
-            return None
-
+            return next((doc for doc in library.documents if doc.id == document_id), None)
         finally:
             self._release_read_lock()
 
@@ -224,9 +219,9 @@ class ThreadSafeDatabase:
                         if hasattr(doc, field) and field not in ["id", "created_at"]:
                             setattr(doc, field, value)
 
-                    doc.updated_at = time.time()
+                    doc.updated_at = datetime.now(UTC)
                     library.documents[i] = doc
-                    library.updated_at = time.time()
+                    library.updated_at = datetime.now(UTC)
 
                     # Rebuild index if chunks were modified
                     if "chunks" in updates:
@@ -264,7 +259,7 @@ class ThreadSafeDatabase:
             for i, doc in enumerate(library.documents):
                 if doc.id == document_id:
                     del library.documents[i]
-                    library.updated_at = time.time()
+                    library.updated_at = datetime.now(UTC)
 
                     # Rebuild index
                     if library_id in self._indexes:
@@ -300,32 +295,38 @@ class ThreadSafeDatabase:
                 return False
 
             library = self._data[library_id]
-            for doc in library.documents:
-                if doc.id == document_id:
-                    doc.chunks.extend(chunks)
-                    doc.updated_at = time.time()
-                    library.updated_at = time.time()
-
-                    # Update index
-                    if library_id in self._indexes:
-                        self._acquire_index_lock(library_id)
-                        try:
-                            index = self._indexes[library_id]
-                            index.add_chunks(chunks)
-                            index.build()
-                        finally:
-                            self._release_index_lock(library_id)
-
-                    # Persist to disk if enabled
-                    if self._persistence_path:
-                        self._persist_to_disk()
-
-                    return True
-
-            return False
-
+            return next(
+                (
+                    self._extracted_from_add_chunks_to_document_12(doc, chunks, library, library_id)
+                    for doc in library.documents
+                    if doc.id == document_id
+                ),
+                False,
+            )
         finally:
             self._release_write_lock()
+
+    # TODO Rename this here and in `add_chunks_to_document`
+    def _extracted_from_add_chunks_to_document_12(self, doc, chunks, library, library_id):
+        doc.chunks.extend(chunks)
+        doc.updated_at = datetime.now(UTC)
+        library.updated_at = datetime.now(UTC)
+
+        # Update index
+        if library_id in self._indexes:
+            self._acquire_index_lock(library_id)
+            try:
+                index = self._indexes[library_id]
+                index.add_chunks(chunks)
+                index.build()
+            finally:
+                self._release_index_lock(library_id)
+
+        # Persist to disk if enabled
+        if self._persistence_path:
+            self._persist_to_disk()
+
+        return True
 
     # Indexing operations
     def build_index(self, library_id: str, index_type: str = "linear", **kwargs) -> bool:
@@ -467,19 +468,13 @@ class ThreadSafeDatabase:
                     if isinstance(item, dict):
                         self._convert_datetime_strings(item)
             elif isinstance(value, str) and key in ["created_at", "updated_at", "index_built_at", "timestamp"]:
-                try:
+                with contextlib.suppress(ValueError):
                     # Try to parse ISO format datetime strings
                     data[key] = datetime.fromisoformat(value.replace("Z", "+00:00"))
-                except ValueError:
-                    # If it's not a valid datetime string, leave as is
-                    pass
             elif isinstance(value, int | float) and key in ["created_at", "updated_at", "index_built_at", "timestamp"]:
-                try:
+                with contextlib.suppress(ValueError, OSError):
                     # Convert float timestamps to datetime objects
                     data[key] = datetime.fromtimestamp(value)
-                except (ValueError, OSError):
-                    # If it's not a valid timestamp, leave as is
-                    pass
 
     def _convert_datetime_to_iso(self, data: dict[str, Any]) -> None:
         """Recursively convert datetime objects to ISO format strings for JSON serialization."""

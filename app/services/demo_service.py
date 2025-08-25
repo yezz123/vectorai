@@ -1,6 +1,8 @@
 """Demo service for showcasing Vector Database functionality with Cohere embeddings."""
 
+import json
 import logging
+import os
 import uuid
 from datetime import UTC, datetime
 from threading import Lock
@@ -16,10 +18,15 @@ logger = logging.getLogger(__name__)
 class DemoService:
     """Service for managing and running Vector Database demos."""
 
-    def __init__(self):
+    def __init__(self, persistence_path: str | None = None):
         self.demos: dict[str, dict[str, Any]] = {}
         self.demo_lock = Lock()
         self.embedding_provider = get_embedding_provider()
+        self.persistence_path = persistence_path or "data/demos.json"
+
+        # Load existing demos from disk if persistence is enabled
+        if self.persistence_path:
+            self._load_demos_from_disk()
 
         # Sample data for demos
         self.sample_documents = [
@@ -70,6 +77,61 @@ class DemoService:
             "semantic understanding and embeddings",
         ]
 
+    def _persist_demos_to_disk(self):
+        """Persist demos to disk."""
+        if not self.persistence_path:
+            return
+
+        try:
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(self.persistence_path), exist_ok=True)
+
+            # Convert datetime objects to ISO format strings for JSON serialization
+            serializable_demos = {}
+            for demo_id, demo_data in self.demos.items():
+                serializable_demo = demo_data.copy()
+                if serializable_demo.get("started_at"):
+                    serializable_demo["started_at"] = serializable_demo["started_at"].isoformat()
+                if serializable_demo.get("completed_at"):
+                    serializable_demo["completed_at"] = serializable_demo["completed_at"].isoformat()
+                serializable_demos[demo_id] = serializable_demo
+
+            # Save to file
+            with open(self.persistence_path, "w") as f:
+                json.dump(serializable_demos, f, indent=2)
+
+        except Exception as e:
+            logger.error(f"Failed to persist demos: {e}")
+
+    def _load_demos_from_disk(self):
+        """Load demos from disk."""
+        if not self.persistence_path or not os.path.exists(self.persistence_path):
+            return
+
+        try:
+            with open(self.persistence_path) as f:
+                data = json.load(f)
+
+            # Convert datetime strings back to datetime objects
+            for demo_id, demo_data in data.items():
+                if demo_data.get("started_at"):
+                    try:
+                        demo_data["started_at"] = datetime.fromisoformat(demo_data["started_at"].replace("Z", "+00:00"))
+                    except ValueError:
+                        demo_data["started_at"] = None
+                if demo_data.get("completed_at"):
+                    try:
+                        demo_data["completed_at"] = datetime.fromisoformat(
+                            demo_data["completed_at"].replace("Z", "+00:00")
+                        )
+                    except ValueError:
+                        demo_data["completed_at"] = None
+
+                self.demos[demo_id] = demo_data
+
+        except Exception as e:
+            logger.error(f"Failed to load demos from disk: {e}")
+
     def start_cohere_demo(
         self, library_name: str, library_description: str, use_cohere: bool = True, cohere_api_key: str | None = None
     ) -> str:
@@ -99,6 +161,9 @@ class DemoService:
                 "results": {},
                 "error": None,
             }
+
+        # Persist to disk
+        self._persist_demos_to_disk()
 
         logger.info(f"Demo {demo_id} started successfully")
         return demo_id
@@ -130,6 +195,9 @@ class DemoService:
                 "results": {},
                 "error": None,
             }
+
+        # Persist to disk
+        self._persist_demos_to_disk()
 
         logger.info(f"Quick demo {demo_id} started successfully")
         return demo_id
@@ -181,6 +249,7 @@ class DemoService:
                 raise ValueError(f"Demo {demo_id} not found")
 
             del self.demos[demo_id]
+            self._persist_demos_to_disk()
 
     async def run_demo_async(self, demo_id: str) -> None:
         """Run the demo asynchronously."""
@@ -192,6 +261,7 @@ class DemoService:
                     self.demos[demo_id]["status"] = DemoStatus.FAILED
                     self.demos[demo_id]["error"] = str(e)
                     self.demos[demo_id]["completed_at"] = datetime.now(UTC)
+                    self._persist_demos_to_disk()
 
     def run_quick_demo_sync(self, demo_id: str) -> dict[str, Any]:
         """Run a quick demo synchronously."""
@@ -203,6 +273,7 @@ class DemoService:
                     self.demos[demo_id]["status"] = DemoStatus.FAILED
                     self.demos[demo_id]["error"] = str(e)
                     self.demos[demo_id]["completed_at"] = datetime.now(UTC)
+                    self._persist_demos_to_disk()
             raise
 
     def _run_demo_sync(self, demo_id: str, quick: bool = False) -> dict[str, Any]:
@@ -379,6 +450,7 @@ class DemoService:
                         "total_chunks": stats["total_chunks"],
                     },
                 }
+                self._persist_demos_to_disk()
 
             logger.info(f"Demo {demo_id} completed successfully")
             logger.info(f"Demo {demo_id} results: {demo['results']}")
@@ -391,6 +463,7 @@ class DemoService:
                 demo["error"] = str(e)
                 demo["completed_at"] = datetime.now(UTC)
                 demo["progress"]["step"] = f"Failed: {str(e)}"
+                self._persist_demos_to_disk()
             raise
 
     def _update_progress(self, demo_id: str, step: str, step_number: int):

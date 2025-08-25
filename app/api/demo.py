@@ -56,11 +56,10 @@ async def get_demo_status(demo_id: str, demo_service: DemoService = Depends(get_
     """Get the current status of a running demo."""
     logger.debug(f"Getting status for demo: {demo_id}")
     try:
-        status = demo_service.get_demo_status(demo_id)
-        return status
+        return demo_service.get_demo_status(demo_id)
     except ValueError as e:
         logger.warning(f"Demo {demo_id} not found: {str(e)}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to get demo status for {demo_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get demo status: {str(e)}")
