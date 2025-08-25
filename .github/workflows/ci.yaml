@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "**"
+  pull_request: {}
+
+env:
+  COLUMNS: 150
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --python 3.12 --all-extras
+
+      - uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files --verbose
+        env:
+          SKIP: no-commit-to-branch
+  # Build the docker image
+  Docker:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2.2.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2.10.0
+      - name: Build Docker Image
+        id: docker_build
+        uses: docker/build-push-action@v4.2.1
+        with:
+          context: .
+          platforms: linux/amd64
+  # https://github.com/marketplace/actions/alls-green#why used for branch protection checks
+  check:
+    if: always()
+    needs: [lint, Docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
