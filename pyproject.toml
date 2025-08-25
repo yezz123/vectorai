@@ -1,0 +1,111 @@
+[project]
+name = "vectorai"
+version = "1.0.0"
+description = "A Vector Database REST API with custom indexing algorithms"
+authors = [
+    {name = "Yasser Tahiri", email = "hello@yezz.me"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
+    "pydantic>=2.0.0",
+    "numpy>=1.24.0",
+    "cohere>=5.17.0",
+    "pydantic-settings>=2.10.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yezz123/vectorai"
+Repository = "https://github.com/yezz123/vectorai"
+
+[project.scripts]
+vectorai = "app.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 120
+target-version = 'py311'
+
+[tool.ruff.lint]
+mccabe = { max-complexity = 14 }
+pydocstyle = { convention = 'google' }
+select = [
+    'F',      # Pyflakes
+    'E',      # pycodestyle (Error)
+    'I',      # isort
+    'D',      # pydocstyle
+    'UP',     # pyupgrade
+    'YTT',    # flake8-2020
+    'B',      # flake8-bugbear
+    'T10',    # flake8-debugger
+    'T20',    # flake8-print
+    'C4',     # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # Use of assert detected.
+    "B018",  # Found useless expression.
+    "B904",  # Use of assert detected.
+    "D100",  # Missing docstring
+    "D101",  # Missing docstring
+    "D107",  # Missing docstring
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-third-party = ["pydantic", "typing_extensions"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.mypy]
+strict = true
+warn_return_any = false
+no_implicit_optional = false
+
+[tool.pytest.ini_options]
+testpaths = 'tests'
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format= "%Y-%m-%d %H:%M:%S"
+asyncio_mode= "auto"
+filterwarnings = [
+    'error',
+    'ignore::DeprecationWarning',
+]
+
+[tool.codespell]
+skip = '.git,env*,__pycache__,.venv'
+ignore-words-list = 'ines,ser'
