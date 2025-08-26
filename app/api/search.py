@@ -30,12 +30,12 @@ async def search_similar_chunks(
         return result
     except ValueError as e:
         logger.warning(f"Invalid search query for library {library_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to perform search in library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to perform search: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/libraries", status_code=status.HTTP_200_OK)
@@ -53,13 +53,13 @@ async def search_across_libraries(
         return results
     except ValueError as e:
         logger.warning(f"Invalid cross-library search query: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to perform cross-library search: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to perform cross-library search: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/libraries/{library_id}/suggestions", status_code=status.HTTP_200_OK)
@@ -82,12 +82,12 @@ async def get_search_suggestions(
         return suggestions
     except ValueError as e:
         logger.warning(f"Invalid request for search suggestions in library {library_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to get search suggestions for library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get search suggestions: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/libraries/{library_id}/analytics", status_code=status.HTTP_200_OK)
@@ -103,8 +103,9 @@ async def get_search_analytics(
     except Exception as e:
         logger.error(f"Failed to get search analytics for library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get search analytics: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get search analytics: {str(e)}",
+        ) from e
 
 
 @router.post("/demo", status_code=status.HTTP_200_OK)
@@ -125,9 +126,10 @@ async def demo_search(
         all_chunks = []
 
         for library_id, result in results.items():
-            for chunk, score in zip(result.chunks, result.scores, strict=False):
-                all_chunks.append({"chunk": chunk, "score": score, "library_id": library_id})
-
+            all_chunks.extend(
+                {"chunk": chunk, "score": score, "library_id": library_id}
+                for chunk, score in zip(result.chunks, result.scores, strict=False)
+            )
         # Sort by score and get top k
         all_chunks.sort(key=lambda x: x["score"], reverse=True)
         top_results = all_chunks[: query.k]
@@ -144,9 +146,10 @@ async def demo_search(
         }
     except ValueError as e:
         logger.warning(f"Invalid demo search query: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to perform demo search: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to perform demo search: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to perform demo search: {str(e)}",
+        ) from e

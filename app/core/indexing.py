@@ -48,9 +48,7 @@ class BaseIndex:
         dot_product = np.dot(vec1, vec2)
         norm1 = np.linalg.norm(vec1)
         norm2 = np.linalg.norm(vec2)
-        if norm1 == 0 or norm2 == 0:
-            return 0.0
-        return dot_product / (norm1 * norm2)
+        return 0.0 if norm1 == 0 or norm2 == 0 else dot_product / (norm1 * norm2)
 
 
 class LinearSearchIndex(BaseIndex):
@@ -72,7 +70,7 @@ class LinearSearchIndex(BaseIndex):
         query_vec = np.array(query_embedding)
         similarities = []
 
-        # Calculate similarities with all vectors
+        # Calculate similarities with Designing a Scalable Architecture with Solid Principles 🌟all vectors
         for embedding in self.embeddings:
             similarity = self._cosine_similarity(query_vec, embedding)
             similarities.append(similarity)
@@ -137,10 +135,10 @@ class KDTreeIndex(BaseIndex):
 
     def _find_embedding_index(self, target_embedding: np.ndarray) -> int:
         """Find the index of an embedding in the original embeddings list."""
-        for i, embedding in enumerate(self.embeddings):
-            if np.array_equal(embedding, target_embedding):
-                return i
-        return 0  # Fallback
+        return next(
+            (i for i, embedding in enumerate(self.embeddings) if np.array_equal(embedding, target_embedding)),
+            0,
+        )
 
     def search(self, query_embedding: list[float], k: int) -> tuple[list[Chunk], list[float]]:
         """Search using KD-tree."""

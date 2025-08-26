@@ -108,19 +108,18 @@ class DocumentService:
 
     def get_document_stats(self, library_id: str, document_id: str) -> dict[str, Any] | None:
         """Get statistics for a specific document."""
-        document = self.get_document(library_id, document_id)
-        if not document:
+        if document := self.get_document(library_id, document_id):
+            return {
+                "document_id": document_id,
+                "library_id": library_id,
+                "name": document.name,
+                "total_chunks": len(document.chunks),
+                "created_at": document.created_at,
+                "updated_at": document.updated_at,
+                "metadata": document.metadata,
+            }
+        else:
             return None
-
-        return {
-            "document_id": document_id,
-            "library_id": library_id,
-            "name": document.name,
-            "total_chunks": len(document.chunks),
-            "created_at": document.created_at,
-            "updated_at": document.updated_at,
-            "metadata": document.metadata,
-        }
 
     def search_documents_by_name(self, library_id: str, name_query: str) -> list[Document]:
         """Search documents by name (case-insensitive partial match)."""
@@ -135,13 +134,9 @@ class DocumentService:
         filtered_documents = []
 
         for doc in documents:
-            matches_all_filters = True
-
-            for key, value in metadata_filters.items():
-                if key not in doc.metadata or doc.metadata[key] != value:
-                    matches_all_filters = False
-                    break
-
+            matches_all_filters = not any(
+                key not in doc.metadata or doc.metadata[key] != value for key, value in metadata_filters.items()
+            )
             if matches_all_filters:
                 filtered_documents.append(doc)
 

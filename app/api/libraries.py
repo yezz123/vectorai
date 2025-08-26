@@ -31,12 +31,13 @@ async def create_library(
         return library
     except ValueError as e:
         logger.warning(f"Invalid request for library creation: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to create library: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create library: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create library: {str(e)}",
+        ) from e
 
 
 @router.get("/", response_model=list[Library])
@@ -50,8 +51,9 @@ async def get_all_libraries(library_service: LibraryService = Depends(get_librar
     except Exception as e:
         logger.error(f"Failed to retrieve libraries: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve libraries: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve libraries: {str(e)}",
+        ) from e
 
 
 @router.get("/{library_id}", response_model=Library)
@@ -70,8 +72,9 @@ async def get_library(library_id: str, library_service: LibraryService = Depends
     except Exception as e:
         logger.error(f"Failed to retrieve library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve library: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve library: {str(e)}",
+        ) from e
 
 
 @router.put("/{library_id}", response_model=Library)
@@ -89,14 +92,15 @@ async def update_library(
         return library
     except ValueError as e:
         logger.warning(f"Invalid request for library update {library_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to update library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update library: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update library: {str(e)}",
+        ) from e
 
 
 @router.delete("/{library_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -115,8 +119,9 @@ async def delete_library(library_id: str, library_service: LibraryService = Depe
     except Exception as e:
         logger.error(f"Failed to delete library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete library: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete library: {str(e)}",
+        ) from e
 
 
 @router.post("/{library_id}/index", status_code=status.HTTP_200_OK)
@@ -148,14 +153,15 @@ async def build_index(
         }
     except ValueError as e:
         logger.warning(f"Invalid index parameters for library {library_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to build {index_type} index for library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to build index: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to build index: {str(e)}",
+        ) from e
 
 
 @router.get("/{library_id}/index", status_code=status.HTTP_200_OK)
@@ -178,8 +184,9 @@ async def get_index_info(
     except Exception as e:
         logger.error(f"Failed to get index info for library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get index info: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get index info: {str(e)}",
+        ) from e
 
 
 @router.get("/{library_id}/stats", status_code=status.HTTP_200_OK)
@@ -200,8 +207,9 @@ async def get_library_stats(
     except Exception as e:
         logger.error(f"Failed to get stats for library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get library stats: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get library stats: {str(e)}",
+        ) from e
 
 
 @router.get("/index-types/info", status_code=status.HTTP_200_OK)
@@ -217,5 +225,6 @@ async def get_index_types_info(
     except Exception as e:
         logger.error(f"Failed to get index types info: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get index types info: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get index types info: {str(e)}",
+        ) from e

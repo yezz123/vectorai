@@ -49,10 +49,7 @@ def setup_logging(
     # Console handler
     if enable_console:
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(log_level_num)
-        console_handler.setFormatter(formatter)
-        root_logger.addHandler(console_handler)
-
+        setting_logging(console_handler, log_level_num, formatter, root_logger)
     # File handler
     if enable_file_logging and file_path:
         # Ensure log directory exists
@@ -66,10 +63,7 @@ def setup_logging(
             backupCount=settings.log_backup_count,
             encoding="utf-8",
         )
-        file_handler.setLevel(log_level_num)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-
+        setting_logging(file_handler, log_level_num, formatter, root_logger)
     # Set specific logger levels for external libraries
     logging.getLogger("uvicorn").setLevel(logging.INFO)
     logging.getLogger("fastapi").setLevel(logging.INFO)
@@ -80,6 +74,13 @@ def setup_logging(
     logger.info(f"Logging configured - Level: {level.upper()}, Console: {enable_console}, File: {enable_file_logging}")
     if enable_file_logging and file_path:
         logger.info(f"Log file: {file_path}")
+
+
+def setting_logging(arg, log_level_num, formatter, root_logger):
+    """Configuration for logging setup."""
+    arg.setLevel(log_level_num)
+    arg.setFormatter(formatter)
+    root_logger.addHandler(arg)
 
 
 def get_logger(name: str) -> logging.Logger:

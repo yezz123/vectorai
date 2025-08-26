@@ -46,13 +46,12 @@ class EmbeddingProvider:
         Returns:
             List of floats representing the embedding vector
         """
-        if use_cohere and self.cohere_client:
-            try:
-                return self._get_cohere_embedding(text)
-            except Exception as e:
-                logger.warning(f"Cohere API failed, falling back to hash-based embedding: {e}")
-                return self._get_hash_embedding(text, dimension)
-        else:
+        if not use_cohere or not self.cohere_client:
+            return self._get_hash_embedding(text, dimension)
+        try:
+            return self._get_cohere_embedding(text)
+        except Exception as e:
+            logger.warning(f"Cohere API failed, falling back to hash-based embedding: {e}")
             return self._get_hash_embedding(text, dimension)
 
     def _get_cohere_embedding(self, text: str) -> list[float]:
@@ -62,9 +61,7 @@ class EmbeddingProvider:
 
         response = self.cohere_client.embed(texts=[text], model="embed-english-v3.0", input_type="search_document")
 
-        # Cohere returns embeddings as a list of lists
-        embedding = response.embeddings[0]
-        return embedding
+        return response.embeddings[0]
 
     def _get_hash_embedding(self, text: str, dimension: int = 384) -> list[float]:
         """Convert text to a simple embedding vector for testing purposes.
@@ -176,10 +173,7 @@ def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     norm1 = np.linalg.norm(vec1_array)
     norm2 = np.linalg.norm(vec2_array)
 
-    if norm1 == 0 or norm2 == 0:
-        return 0.0
-
-    return dot_product / (norm1 * norm2)
+    return 0.0 if norm1 == 0 or norm2 == 0 else dot_product / (norm1 * norm2)
 
 
 def euclidean_distance(vec1: list[float], vec2: list[float]) -> float:
@@ -213,10 +207,7 @@ def validate_embedding(embedding: list[float], expected_dimension: int = None) -
     if not all(isinstance(x, int | float) for x in embedding):
         return False
 
-    if expected_dimension and len(embedding) != expected_dimension:
-        return False
-
-    return True
+    return not expected_dimension or len(embedding) == expected_dimension
 
 
 def batch_text_to_embeddings(texts: list[str], dimension: int = 384, use_cohere: bool = True) -> list[list[float]]:

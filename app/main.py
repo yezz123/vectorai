@@ -111,7 +111,7 @@ async def health_check():
         }
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") from e
 
 
 @app.get("/api/v1/stats", tags=["stats"])
@@ -123,7 +123,7 @@ async def get_system_stats():
         return database.get_stats()
     except Exception as e:
         logger.error(f"Failed to get system stats: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}") from e
 
 
 @app.exception_handler(Exception)

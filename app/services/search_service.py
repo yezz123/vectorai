@@ -85,10 +85,8 @@ class SearchService:
                 # Advanced filtering with operators
                 if not self._evaluate_filter_operator(chunk_value, value):
                     return False
-            else:
-                # Simple equality check
-                if chunk_value != value:
-                    return False
+            elif chunk_value != value:
+                return False
 
         return True
 

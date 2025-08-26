@@ -33,14 +33,15 @@ async def create_document(
         return document
     except ValueError as e:
         logger.warning(f"Invalid request for document creation in library {library_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to create document in library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create document: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create document: {str(e)}",
+        ) from e
 
 
 @router.get("/", response_model=list[Document])
@@ -56,8 +57,9 @@ async def get_all_documents(
     except Exception as e:
         logger.error(f"Failed to retrieve documents from library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve documents: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve documents: {str(e)}",
+        ) from e
 
 
 @router.get("/{document_id}", response_model=Document)
@@ -81,8 +83,9 @@ async def get_document(
     except Exception as e:
         logger.error(f"Failed to retrieve document {document_id} from library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve document: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve document: {str(e)}",
+        ) from e
 
 
 @router.put("/{document_id}", response_model=Document)
@@ -106,14 +109,15 @@ async def update_document(
         return document
     except ValueError as e:
         logger.warning(f"Invalid request for document update {document_id} in library {library_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to update document {document_id} in library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update document: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update document: {str(e)}",
+        ) from e
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -137,8 +141,9 @@ async def delete_document(
     except Exception as e:
         logger.error(f"Failed to delete document {document_id} from library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete document: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete document: {str(e)}",
+        ) from e
 
 
 @router.post("/{document_id}/chunks", status_code=status.HTTP_200_OK)
@@ -168,12 +173,15 @@ async def add_chunks_to_document(
         }
     except ValueError as e:
         logger.warning(f"Invalid request for adding chunks to document {document_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to add chunks to document {document_id} in library {library_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to add chunks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add chunks: {str(e)}",
+        ) from e
 
 
 @router.get("/{document_id}/stats", status_code=status.HTTP_200_OK)
@@ -197,8 +205,9 @@ async def get_document_stats(
     except Exception as e:
         logger.error(f"Failed to get stats for document {document_id} in library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get document stats: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get document stats: {str(e)}",
+        ) from e
 
 
 @router.get("/search/name", response_model=list[Document])
@@ -214,8 +223,9 @@ async def search_documents_by_name(
     except Exception as e:
         logger.error(f"Failed to search documents by name in library {library_id}: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to search documents: {str(e)}"
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to search documents: {str(e)}",
+        ) from e
 
 
 @router.post("/search/metadata", response_model=list[Document])
@@ -233,4 +243,4 @@ async def search_documents_by_metadata(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to search documents by metadata: {str(e)}",
-        )
+        ) from e

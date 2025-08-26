@@ -48,7 +48,7 @@ async def run_cohere_demo(
 
     except Exception as e:
         logger.error(f"Failed to start Cohere demo: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to start Cohere demo: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to start Cohere demo: {str(e)}") from e
 
 
 @router.get("/cohere/status/{demo_id}", response_model=DemoResponse)
@@ -62,7 +62,7 @@ async def get_demo_status(demo_id: str, demo_service: DemoService = Depends(get_
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to get demo status for {demo_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get demo status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get demo status: {str(e)}") from e
 
 
 @router.get("/cohere/list", response_model=list[DemoResponse])
@@ -75,7 +75,7 @@ async def list_demos(demo_service: DemoService = Depends(get_demo_service)):
         return demos
     except Exception as e:
         logger.error(f"Failed to list demos: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list demos: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list demos: {str(e)}") from e
 
 
 @router.delete("/cohere/{demo_id}")
@@ -88,10 +88,10 @@ async def delete_demo(demo_id: str, demo_service: DemoService = Depends(get_demo
         return {"message": f"Demo {demo_id} deleted successfully"}
     except ValueError as e:
         logger.warning(f"Demo {demo_id} not found for deletion: {str(e)}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to delete demo {demo_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete demo: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete demo: {str(e)}") from e
 
 
 @router.post("/cohere/quick")
@@ -117,4 +117,4 @@ async def run_quick_demo(demo_service: DemoService = Depends(get_demo_service)):
 
     except Exception as e:
         logger.error(f"Failed to run quick demo: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to run quick demo: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to run quick demo: {str(e)}") from e
